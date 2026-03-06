@@ -81,18 +81,19 @@ REPOS_EOF
         python3
 
     echo "[3/7] Installing MSP430 GCC toolchain..."
-    apk add --no-cache \
-        gcc-msp430 \
-        msp430-libc \
-        binutils-msp430 \
-        || {
-            echo "[WARN] gcc-msp430 not found in standard repos, trying community..."
-            apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/community \
-                gcc-msp430 msp430-libc binutils-msp430
-        }
+    # Alpine 3.22+ renamed packages: gcc-msp430-elf, binutils-msp430-elf, newlib-msp430-elf
+    # Alpine <3.22 used: gcc-msp430, binutils-msp430, msp430-libc
+    if apk add --no-cache gcc-msp430-elf binutils-msp430-elf newlib-msp430-elf 2>/dev/null; then
+        echo "      Installed gcc-msp430-elf (Alpine 3.22+ package names)"
+    elif apk add --no-cache gcc-msp430 msp430-libc binutils-msp430 2>/dev/null; then
+        echo "      Installed gcc-msp430 (legacy package names)"
+    else
+        echo "[ERROR] Could not find MSP430 toolchain packages."
+        exit 1
+    fi
 
     echo "[4/7] Installing mspdebug dependencies..."
-    apk add --no-cache libusb-dev libusb-compat-dev readline-dev
+    apk add --no-cache libusb-dev libusb-compat-dev readline-dev linux-headers
 
     echo "[5/7] Building mspdebug from source..."
     cd /tmp
@@ -295,6 +296,7 @@ make() {
 BASHRC_EOF
 
 # USB rules for Texas Instruments LaunchPad
+mkdir -p /etc/udev/rules.d
 cat > /etc/udev/rules.d/71-ti-launchpad.rules << 'UDEV_EOF'
 # MSP430 LaunchPad / eZ430 USB permissions
 # Vendor 0451 = Texas Instruments, Vendor 2047 = Texas Instruments (alternate)

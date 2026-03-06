@@ -174,7 +174,7 @@ write_ldscript msp430g2211 0xF800 0x07E0 0x0200 0x0080 0x0280
 
 # ── Quick compile test ────────────────────────────────────────────────────────
 echo "==> Running compile test ..."
-TMPF=$(mktemp /var/tmp/msp430_test.XXXXXX.s)
+TMPF=$(mktemp /var/tmp/msp430_test_XXXXXX)
 cat > "$TMPF" << 'TESTEOF'
 #define WDTPW   0x5A00
 #define WDTHOLD 0x0080
@@ -191,7 +191,7 @@ halt:
         .end
 TESTEOF
 
-TMPELF=$(mktemp /var/tmp/msp430_test.XXXXXX.elf)
+TMPELF=$(mktemp /var/tmp/msp430_test_XXXXXX)
 if msp430-elf-gcc -mmcu=msp430g2552 -x assembler-with-cpp -nostdlib \
         -o "$TMPELF" "$TMPF" 2>&1; then
     echo "    ✓  msp430g2552 compile+link successful"

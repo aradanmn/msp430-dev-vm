@@ -86,6 +86,8 @@ send "setup-alpine\r"
 #   mirror_sent — 'f' was already sent to start mirror detection
 #   disk_sent   — 'vda' was already sent for disk selection
 #   mode_sent   — 'sys' was already sent for install mode
+#   root_sent   — 'yes' was already sent for root SSH login (no-double-fire guard)
+#   install_eof — QEMU exited after installation started (treat as success)
 #
 # Why not a sequential approach?  Alpine 3.23 changed prompt order and
 # removed some prompts entirely; an event loop handles any version.
@@ -93,6 +95,7 @@ send "setup-alpine\r"
 set mirror_sent 0
 set disk_sent   0
 set mode_sent   0
+set root_sent   0
 set timeout     60
 
 while 1 {
@@ -160,14 +163,23 @@ while 1 {
             # else: spurious re-match before speed test — do nothing
         }
 
-        # ── SSH server (absent in Alpine 3.23 — handled post-install) ─────────
+        # ── SSH server (accept default openssh) ───────────────────────────────
         -re {[Ss][Ss][Hh] server} {
             send "\r"
         }
 
         # ── Root SSH login ────────────────────────────────────────────────────
+        # Guard prevents double-fire if Alpine redraws the section header.
         -re {[Rr]oot.*login|[Rr]oot.*ssh} {
-            send "yes\r"
+            if {!$root_sent} {
+                set root_sent 1
+                send "yes\r"
+            }
+        }
+
+        # ── SSH key URL (Alpine 3.23 asks after root login setting) ───────────
+        -re {[Ss]sh key or URL|[Ee]nter ssh key} {
+            send "\r"
         }
 
         # ── User creation (skip — dev user created by vm-setup.sh) ────────────
@@ -184,21 +196,22 @@ while 1 {
         }
 
         # ── Installation mode ─────────────────────────────────────────────────
+        # Set timeout=300 here because Alpine 3.23 sys mode may skip the
+        # erase confirmation (y/n) prompt and start installation immediately.
         -re {[Hh]ow.*use it} {
             if {$disk_sent && !$mode_sent} {
                 set mode_sent 1
                 send "sys\r"
+                set timeout 300
+                puts "    (Installing Alpine to disk — up to 5 minutes...)"
             }
         }
 
-        # ── Erase confirmation ────────────────────────────────────────────────
-        # Generic (y/n) [n] handler — only confirms if we have already sent
-        # the disk and mode, making it safe against other (y/n) prompts.
+        # ── Erase confirmation (older Alpine versions) ────────────────────────
+        # Alpine 3.23 sys mode skips this prompt; kept for compatibility.
         -re {\(y/n\).*\[n\]} {
             if {$mode_sent} {
                 send "y\r"
-                set timeout 300
-                puts "    (Installing Alpine to disk — ~3 minutes...)"
             }
         }
 
@@ -206,6 +219,18 @@ while 1 {
         -re {[Ii]nstallation is complete} {
             puts "==> Installation complete."
             break
+        }
+
+        # ── QEMU exited unexpectedly ──────────────────────────────────────────
+        # This should not happen during a normal install — Alpine 3.23 prints
+        # "Installation is complete. Please reboot." and stays up.  If QEMU
+        # exits early it means a crash or HVF fault; the disk is likely
+        # incomplete.  Always exit with error so the caller can retry.
+        eof {
+            puts "\nERROR: QEMU exited unexpectedly during setup-alpine."
+            puts "       mirror_sent=$mirror_sent  disk_sent=$disk_sent  mode_sent=$mode_sent"
+            puts "       HVF instability on macOS 26?  Re-zero the disk and retry."
+            exit 1
         }
 
         # ── Unexpected timeout ────────────────────────────────────────────────

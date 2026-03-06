@@ -110,27 +110,44 @@ echo "  Disk      : $DISK"
 echo "  ISO       : $ISO"
 echo "  QEMU      : $QEMU"
 
-# ---------------------------------------------------------------------------
-# Step 1: Create a working copy of efi_vars.fd
-#
-# We use a copy so the original is untouched if anything fails.  Alpine's
-# GRUB installer will write its boot entry into the copy during phase 1.
-# After phase 2 completes successfully, we copy it back.
-# ---------------------------------------------------------------------------
-step "1/9" "Copying EFI vars to temp location"
-cp "$UEFI_VARS_ORIG" "$UEFI_VARS_TMP"
-info "EFI vars ready at $UEFI_VARS_TMP"
+# Keep a pristine blank copy of the EFI vars for retries.
+UEFI_VARS_BLANK=/tmp/msp430-efi-vars-blank.fd
+cp "$UEFI_VARS_ORIG" "$UEFI_VARS_BLANK"
 
 # ---------------------------------------------------------------------------
 # Step 2: Phase 1 — Alpine Linux installation (alpine-install.exp)
+#
+# QEMU with HVF acceleration can occasionally crash mid-install on macOS 26
+# (a known HVF instability in pre-release macOS).  We retry up to 3 times,
+# re-zeroing the disk each attempt.
 # ---------------------------------------------------------------------------
-step "2/9" "Phase 1 — Alpine Linux installation (~10 min)"
+step "2/9" "Phase 1 — Alpine Linux installation (~10 min, up to 3 attempts)"
 echo "  The expect script drives setup-alpine interactively."
 echo "  QEMU console output is shown below."
 echo ""
 
-/usr/bin/expect "$SCRIPT_DIR/alpine-install.exp" "$UEFI_VARS_TMP" "$DISK" "$ISO"
-info "Phase 1 complete."
+PHASE1_DONE=0
+for attempt in 1 2 3; do
+    if [ "$attempt" -gt 1 ]; then
+        warn "Phase 1 attempt $attempt/3 — re-zeroing disk and retrying..."
+        truncate -s 0 "$DISK"
+        truncate -s 20480m "$DISK"
+        cp "$UEFI_VARS_BLANK" "$UEFI_VARS_TMP"
+    else
+        cp "$UEFI_VARS_ORIG" "$UEFI_VARS_TMP"
+    fi
+    if /usr/bin/expect "$SCRIPT_DIR/alpine-install.exp" "$UEFI_VARS_TMP" "$DISK" "$ISO"; then
+        PHASE1_DONE=1
+        break
+    fi
+    [ "$attempt" -lt 3 ] || error "Phase 1 failed after 3 attempts. Check the output above."
+done
+
+# Save EFI vars immediately — now contains Alpine's boot entry.
+# This lets you re-run phase 2 manually if phase 2 fails later.
+cp "$UEFI_VARS_TMP" "$UEFI_VARS_ORIG"
+rm -f "$UEFI_VARS_BLANK"
+info "Phase 1 complete. EFI vars saved with Alpine boot entry."
 
 # ---------------------------------------------------------------------------
 # Step 3: Generate temporary SSH keypair
