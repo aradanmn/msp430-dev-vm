@@ -315,13 +315,8 @@ step "7/9" "Uploading setup scripts to VM"
 scp "${SCP_OPTS[@]}" \
     "$SCRIPT_DIR/vm-setup.sh" \
     "$SCRIPT_DIR/install-msp430-support.sh" \
-    root@127.0.0.1:/tmp/
-
-# Place setup-flash.sh in dev's home directory (it must run as dev, not root)
-scp "${SCP_OPTS[@]}" \
     "$SCRIPT_DIR/setup-flash.sh" \
-    root@127.0.0.1:/home/dev/setup-flash.sh
-run_ssh "chown dev:dev /home/dev/setup-flash.sh && chmod +x /home/dev/setup-flash.sh"
+    root@127.0.0.1:/tmp/
 
 info "Scripts uploaded."
 
@@ -340,6 +335,9 @@ echo ""
 
 run_ssh "sh /tmp/vm-setup.sh"
 info "vm-setup.sh complete."
+
+# vm-setup.sh creates the 'dev' user — now move setup-flash.sh to their home
+run_ssh "mv /tmp/setup-flash.sh /home/dev/setup-flash.sh && chown dev:dev /home/dev/setup-flash.sh && chmod +x /home/dev/setup-flash.sh"
 
 # ---------------------------------------------------------------------------
 # Step 8b: Run install-msp430-support.sh (<1 min)
