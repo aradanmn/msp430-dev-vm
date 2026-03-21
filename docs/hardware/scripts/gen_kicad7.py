@@ -150,12 +150,13 @@ def extract_sym(lib_name, sym_name):
         return by_name, by_num
 
     def prefix(block, name):
-        # Rename outer symbol AND all inner sub-symbols (e.g. NAME_0_1, NAME_1_1)
-        # KiCad schematic lib_symbols requires full "lib:name_0_1" sub-symbol names.
+        # Only rename the OUTER symbol to "lib:name". Inner sub-symbols like
+        # (symbol "name_0_1") must stay unqualified — KiCad rejects the prefix there.
         result = block.replace(f'\t(symbol "{name}"',
                                f'  (symbol "{lib_name}:{name}"', 1)
-        result = result.replace(f'(symbol "{name}_',
-                                f'(symbol "{lib_name}:{name}_')
+        # Strip (embedded_fonts ...) lines — valid in .kicad_sym library files
+        # but not inside a schematic's lib_symbols section.
+        result = re.sub(r'\s*\(embedded_fonts [^)]+\)', '', result)
         return result
 
     main = find_block(sym_name)
