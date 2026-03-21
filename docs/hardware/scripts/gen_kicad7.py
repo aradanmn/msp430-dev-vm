@@ -114,9 +114,12 @@ def extract_sym(lib_name, sym_name):
     """Extract symbol from .kicad_sym for embedding in schematic lib_symbols.
 
     Returns (lib_sym_text, pin_by_name, pin_by_num).
-    - lib_sym_text: block(s) ready to embed; names prefixed as 'lib:sym'
+    - lib_sym_text: standalone symbol block ready to embed (no 'extends')
     - pin_by_name / pin_by_num: {str: (lx, ly)} in Y-up local convention
-    Handles 'extends': extracts parent + child, both renamed.
+
+    KiCad does NOT support 'extends' inside a schematic's lib_symbols section.
+    Symbols that use extends are resolved here: parent's body/pin sub-symbols are
+    merged into the child to produce a fully standalone block.
     """
     lib_text = (KICAD_SYM / f'{lib_name}.kicad_sym').read_text()
 
@@ -149,31 +152,65 @@ def extract_sym(lib_name, sym_name):
             by_num[num] = (lx, ly)
         return by_name, by_num
 
-    def prefix(block, name):
-        # Only rename the OUTER symbol to "lib:name". Inner sub-symbols like
-        # (symbol "name_0_1") must stay unqualified — KiCad rejects the prefix there.
-        result = block.replace(f'\t(symbol "{name}"',
-                               f'  (symbol "{lib_name}:{name}"', 1)
-        # Strip (embedded_fonts ...) lines — valid in .kicad_sym library files
-        # but not inside a schematic's lib_symbols section.
-        result = re.sub(r'\s*\(embedded_fonts [^)]+\)', '', result)
-        return result
+    def get_properties(block):
+        """Extract property/flag lines between outer header and first sub-symbol."""
+        first_nl = block.index('\n')
+        sub_idx  = block.find('\t\t(symbol "')
+        content  = block[first_nl + 1 : sub_idx if sub_idx != -1 else block.rindex('\n')]
+        # Strip extends and embedded_fonts — both invalid in schematic lib_symbols
+        content  = re.sub(r'\t*\(extends\s+"[^"]+"\)\n?', '', content)
+        content  = re.sub(r'\t*\(embedded_fonts\s+[^)]+\)\n?', '', content)
+        return content
 
-    main = find_block(sym_name)
-    ext  = re.search(r'\(extends\s+"([^"]+)"\)', main)
+    def get_sub_syms(block, src_name):
+        """Extract (symbol "SRC_NAME_N_M" ...) blocks."""
+        blocks, pos = [], 0
+        target = f'\t\t(symbol "{src_name}_'
+        while True:
+            idx = block.find(target, pos)
+            if idx == -1:
+                break
+            depth = 0
+            for i in range(idx, len(block)):
+                if block[i] == '(':
+                    depth += 1
+                elif block[i] == ')':
+                    depth -= 1
+                    if depth == 0:
+                        blocks.append(block[idx:i + 1])
+                        pos = i + 1
+                        break
+        return blocks
 
-    if ext:
-        parent_name  = ext.group(1)
+    def make_standalone(name, props, sub_syms):
+        """Assemble a standalone lib_symbols-ready block."""
+        subs = '\n'.join(sub_syms)
+        return (
+            f'  (symbol "{lib_name}:{name}"\n'
+            f'{props}'
+            f'{subs}\n'
+            f'\t)'
+        )
+
+    main_block = find_block(sym_name)
+    ext_m      = re.search(r'\(extends\s+"([^"]+)"\)', main_block)
+
+    if ext_m:
+        parent_name  = ext_m.group(1)
         parent_block = find_block(parent_name)
         by_name, by_num = parse_pins(parent_block)
-        renamed_parent = prefix(parent_block, parent_name)
-        renamed_main   = prefix(main, sym_name).replace(
-            f'(extends "{parent_name}")',
-            f'(extends "{lib_name}:{parent_name}")')
-        sym_text = renamed_parent + '\n' + renamed_main
+
+        # Merge: child's properties + parent's sub-symbols renamed to child
+        props    = get_properties(main_block)
+        subs_raw = get_sub_syms(parent_block, parent_name)
+        subs     = [s.replace(f'"{parent_name}_', f'"{sym_name}_')
+                    for s in subs_raw]
+        sym_text = make_standalone(sym_name, props, subs)
     else:
-        by_name, by_num = parse_pins(main)
-        sym_text = prefix(main, sym_name)
+        by_name, by_num = parse_pins(main_block)
+        props    = get_properties(main_block)
+        subs     = get_sub_syms(main_block, sym_name)
+        sym_text = make_standalone(sym_name, props, subs)
 
     return sym_text, by_name, by_num
 
