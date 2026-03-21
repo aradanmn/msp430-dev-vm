@@ -18,6 +18,8 @@ Single repo at github.com/aradanmn/msp430-tetris. 16-lesson assembly course buil
 
 **Course progress:** Lessons 01–04 complete + review-01-02. Lesson 04 = Timer_A.
 
+**KiCad schematic:** docs/hardware/schematic/msp430_gameboy.kicad_sch (KiCad 9, version 20250114). Auto-generated originally by docs/hardware/scripts/gen_kicad7.py. All schematic coordinates must be integer multiples of G=2.54mm or pins won't connect. gen_kicad7.py needs updating to add SRAM/Flash, remove ADC pot (RV2), use SPI OLED. Notes on KiCad format are in docs/hardware/notes/.
+
 **BOM state (Rev E):** 20 line items, total $116.55. Flash IC is Adafruit #5634 (W25Q128JVSSIQ, 16MB, pre-assembled on DIP breakout PCB, $2.95) — replaces separate SOIC-8 chip + adapter. Plugs directly into breadboard, no adapter needed. Potentiometer (Bourns PTV09A-4020F-A103, item 020) in Audio Module. CSV has Status column (In Hand / Order / Partial). Files: docs/bom-flat.md, docs/bom-structured.md, docs/bom-order.csv.
 
 **Inventory (2026-03-21):** In hand: LaunchPad, breadboard, jumper wires, SN74HC165N, LM386N-1, SP-3605 speaker, Adafruit #4410 charger, Adafruit #2011 battery, 1kΩ resistors, 10kΩ pot (A+B taper). Partial: B3F-1000 ×10 (need 12), 10kΩ resistors ×10 (need 12), 0.1µF caps ×2 (need 4). Still to order: OLED display, SRAM, Flash, Samtec headers, 10Ω resistors, 10µF caps, 220µF cap. Remaining spend ~$78.
