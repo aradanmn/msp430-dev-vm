@@ -150,8 +150,13 @@ def extract_sym(lib_name, sym_name):
         return by_name, by_num
 
     def prefix(block, name):
-        return block.replace(f'\t(symbol "{name}"',
-                             f'  (symbol "{lib_name}:{name}"', 1)
+        # Rename outer symbol AND all inner sub-symbols (e.g. NAME_0_1, NAME_1_1)
+        # KiCad schematic lib_symbols requires full "lib:name_0_1" sub-symbol names.
+        result = block.replace(f'\t(symbol "{name}"',
+                               f'  (symbol "{lib_name}:{name}"', 1)
+        result = result.replace(f'(symbol "{name}_',
+                                f'(symbol "{lib_name}:{name}_')
+        return result
 
     main = find_block(sym_name)
     ext  = re.search(r'\(extends\s+"([^"]+)"\)', main)
