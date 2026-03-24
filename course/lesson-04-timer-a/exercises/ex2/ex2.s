@@ -1,44 +1,21 @@
 ;******************************************************************************
 ; Lesson 04 — Exercise 2: Dual-Rate Blinker
 ;
+; Builds on Exercise 1 — your Timer_A setup carries over directly.
+;
 ; Behaviour:
 ;   LED1 toggles every 500 ms  (1 Hz)
 ;   LED2 toggles every 125 ms  (4 Hz)
-;   Both blink simultaneously, driven from one Timer_A tick.
+;   Both blink simultaneously, driven from one timer tick.
 ;
 ; Requirements:
-;   - Choose a tick period that divides evenly into both 500 ms and 125 ms
+;   - Choose a tick period that divides evenly into both intervals
 ;   - Define TICK_PERIOD, LED1_TICKS, LED2_TICKS as .equ constants
 ;   - Two independent tick-down counters in separate registers
-;   - Main loop: one TAIFG poll, then service both channels
+;   - One TAIFG poll per loop iteration; service both channels after each tick
 ;   - No magic numbers
 ;
-; Choosing your tick:
-;   GCD(500, 125) = 125 ms — but TACCR0 = 124999 which fits in 16 bits (max 65535).
-;   5 ms also works: 500/5 = 100, 125/5 = 25. TACCR0 = 4999. Either is fine.
-;
-; Structure hint:
-;
-;   main_loop:
-;       poll TAIFG → jz main_loop
-;       clear TAIFG
-;
-;       ; LED1 channel
-;       dec.w   R6
-;       jnz     .Lled1_skip
-;       ; toggle LED1, reload R6
-;   .Lled1_skip:
-;
-;       ; LED2 channel
-;       dec.w   R7
-;       jnz     .Lled2_skip
-;       ; toggle LED2, reload R7
-;   .Lled2_skip:
-;
-;       jmp     main_loop
-;
 ; Registers: R6 = LED1 countdown, R7 = LED2 countdown
-; (R4–R9 are caller-saved general purpose — choose any unused pair)
 ;******************************************************************************
 
 #include "../../../common/msp430g2553-defs.s"
@@ -49,9 +26,9 @@
 ;==============================================================================
 ; Timing constants — fill in the values
 ;==============================================================================
-.equ TICK_PERIOD,   0       ; TODO: TACCR0 for your chosen tick
-.equ LED1_TICKS,    0       ; TODO: ticks per 500 ms
-.equ LED2_TICKS,    0       ; TODO: ticks per 125 ms
+.equ TICK_PERIOD,   4999       ; 5 ms ticks works the best for each period
+.equ LED1_TICKS,    100       ; TODO: ticks per 500 ms
+.equ LED2_TICKS,    25       ; TODO: ticks per 125 ms
 
 _start:
     mov.w   #0x0400, SP
@@ -61,17 +38,39 @@ _start:
     mov.b   &CALDCO_1MHZ, &DCOCTL
 
     ; TODO: configure LED1 and LED2 as outputs, both OFF
-    bis.b   #(LED1|LED2), &P1DIR
-    bic.b   #(LED1|LED2), &P1OUT
+    bis.b   #(LED1|LED2), &P1DIR  ; Set LEDs as outputs
+    bic.b   #(LED1|LED2), &P1OUT  ; set register bits to 0
 
     ; TODO: configure Timer_A (TACCR0 then TACTL)
+    mov.w   #TICK_PERIOD, &TACCR0 ;Set TACCR0 to 5 ms ticks
+    mov.w   #(TASSEL_2|MC_1|TACLR), &TACTL
 
-    ; TODO: load both tick-down counters (R6 = LED1, R7 = LED2)
+    ; TODO: load both tick-down counters
+    mov.w   #LED1_TICKS, R6
+    mov.w   #LED2_TICKS, R7
 
-; TODO: main loop
 main_loop:
+    ; TODO: poll TAIFG, clear it, then service both LED channels
+    ; Wait for TA Interrupt Flag
+    bit.w   #TAIFG, &TACTL
+    jz  main_loop
+    bic.w   #TAIFG, &TACTL
 
-    jmp     main_loop       ; placeholder — replace with your implementation
+    ; toggle LED1 every LED1_TICKS
+    dec.w   R6
+    jnz     .Lled1_skip
+    xor.b   #LED1, &P1OUT       ; toggle LED1
+    mov.w   #LED1_TICKS, R6     ; reload counter
+.Lled1_skip:
+
+    ; toggle LED2 every LED2_TICKS
+    dec.w   R7
+    jnz     .Lled2_skip
+    xor.b   #LED2, &P1OUT       ; toggle LED2
+    mov.w   #LED2_TICKS, R7     ; reload counter
+.Lled2_skip:
+
+    jmp     main_loop
 
 ;==============================================================================
 ; Interrupt Vector Table

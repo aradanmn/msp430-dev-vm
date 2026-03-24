@@ -45,8 +45,8 @@
 ;==============================================================================
 ; Timing constants — fill in the correct values
 ;==============================================================================
-.equ TICK_PERIOD,   0       ; TODO: TACCR0 value for your chosen tick interval
-.equ BLINK_TICKS,   0       ; TODO: number of ticks per 250 ms
+.equ TICK_PERIOD,   4999       ; TODO: TACCR0 value for your chosen tick interval
+.equ BLINK_TICKS,   50       ; TODO: number of ticks per 250 ms
 
 _start:
     mov.w   #0x0400, SP
@@ -62,12 +62,22 @@ _start:
     ; TODO: configure Timer_A
     ;   Step 1: set the period register
     ;   Step 2: start the timer (SMCLK, up mode, clear TAR)
+    mov.w   #TICK_PERIOD, &TACCR0   ; Set TACCRO to 4999
+    mov.w   #(TASSEL_2|MC_1|TACLR), &TACTL  ; TASSEL_2 = SMCLK, MC_1 = Count up 0 to TACCR0, TACLR = reset TAR to 0
 
     ; TODO: load tick-down counter into a register (R6 recommended)
+    mov.w #BLINK_TICKS, R6
 
 ; TODO: main loop — poll, clear, decrement, toggle, reload
 main_loop:
 
+    bit.w #TAIFG, &TACTL    ; Read bit 0 TAIFG in TACTL register
+    jz  main_loop
+    bic.w #TAIFG, &TACTL    ; clear flag as soon as we detect it.
+    dec.w R6               ; decrement R6 by 1
+    jnz main_loop
+    xor.b #LED1, &P1OUT     ; Toggle on/off LED1
+    mov.w #BLINK_TICKS, R6  ; reload counter
     jmp     main_loop       ; placeholder — replace with your implementation
 
 ;==============================================================================

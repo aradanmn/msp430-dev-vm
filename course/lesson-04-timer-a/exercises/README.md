@@ -3,9 +3,15 @@
 Run the example first (`cd examples && make flash`) and observe LED1 (2 Hz)
 and LED2 (5 Hz) blinking independently — both driven by one 10 ms timer tick.
 
+Each exercise builds on the previous. By Exercise 3 you are combining Timer_A,
+dual-channel counting, and button edge detection with no assistance from the
+skeleton beyond the behaviour spec.
+
 ---
 
 ## Exercise 1 — Hardware Blink
+
+**Requires:** Lessons 1–3 (GPIO setup, register operations)
 
 **File:** `ex1/ex1.s`
 
@@ -15,42 +21,43 @@ Blink LED1 at exactly **2 Hz** (toggle every 250 ms).
 **What to implement:**
 - Define `TICK_PERIOD` and `BLINK_TICKS` as `.equ` constants (compute the values)
 - Write TACCR0 then TACTL to start Timer_A
-- Load a tick countdown register
 - Main loop: poll TAIFG, clear it, decrement counter, toggle + reload when zero
-- No `delay_ms` or `call` instructions — this is a flat polling loop
+- No `delay_ms` or `call` instructions
 
-**New instructions used:** `bit.w`, `bic.w` (same as `bit.b`/`bic.b` but 16-bit)
+**New instructions:** `bit.w`, `bic.w` (16-bit equivalents of `bit.b`/`bic.b`)
 
-**Success criteria:** LED1 blinks visibly at 2 Hz. The rate doesn't drift.
-Changing only `TICK_PERIOD` adjusts timing throughout with no other edits.
+**Success criteria:** LED1 blinks at 2 Hz. Rate doesn't drift. Changing only
+`TICK_PERIOD` adjusts timing throughout with no other edits.
 
 ---
 
 ## Exercise 2 — Dual-Rate Blinker
 
+**Requires:** Lessons 1–3 + Exercise 1 (Timer_A polling loop)
+
 **File:** `ex2/ex2.s`
 
-Drive two LEDs at different rates from one timer:
+Drive two LEDs at different rates from one timer — one TAIFG poll, two channels:
 - **LED1** toggles every **500 ms** (1 Hz)
 - **LED2** toggles every **125 ms** (4 Hz)
 
 **What to implement:**
 - Choose a tick period that divides evenly into both intervals
-- Define all four constants: `TICK_PERIOD`, `LED1_TICKS`, `LED2_TICKS`
-- Two independent tick-down counters in separate registers
-- Service both channels in the main loop after each tick
+- Define `TICK_PERIOD`, `LED1_TICKS`, `LED2_TICKS` as `.equ` constants
+- Two independent tick-down counters; service both after every tick
 
-**Success criteria:** Both LEDs blink simultaneously at their target rates.
-Neither LED affects the other. Changing one `*_TICKS` constant does not
-disturb the other channel.
+**Success criteria:** Both LEDs blink at their rates simultaneously.
+Neither channel affects the other.
 
 ---
 
 ## Exercise 3 — Adjustable-Speed Blinker
 
+**Requires:** Lessons 1–3 + Exercises 1–2 (timer tick + dual-channel counting)
+
 **File:** `ex3/ex3.s`
 
-LED1 blinks continuously. Each button press cycles through four blink speeds:
+LED1 blinks continuously. Each button press cycles through four speeds:
 
 | Speed | Toggle period | Rate |
 |-------|--------------|------|
@@ -59,30 +66,21 @@ LED1 blinks continuously. Each button press cycles through four blink speeds:
 | 2 | 100 ms | 5 Hz |
 | 3 (fast) | 50 ms | 10 Hz |
 
-LED2 flashes briefly (200 ms) to acknowledge each speed change.
+LED2 flashes for 200 ms to acknowledge each speed change.
 
 **What to implement:**
-- Timer_A 10 ms tick
-- `apply_speed` subroutine: reads speed index in R8, sets tick count in R9
-- Blink counter in R6, loaded from R9 via `apply_speed`
-- Button edge detection on each tick (from Tutorial 02):
-  - Store previous BTN sample in R10
-  - On each tick: read BTN, compare to R10, detect falling edge
-  - On press: advance R8 (wrap at `NUM_SPEEDS`), call `apply_speed`, reload R6
-- LED2 acknowledgement counter in R7 (counts down from `ACK_TICKS`)
+- `apply_speed` subroutine: reads speed index from R8, writes tick count to R9
+- Button edge detection on each tick — no `delay_ms`, no blocking wait
+- LED2 acknowledgement countdown driven by the same tick
 
-**New concept:** Timer-based button edge detection — no `delay_ms` debounce,
-no blocking wait. The 10 ms sampling interval provides natural debounce.
-
-**Success criteria:** Each button press advances the speed exactly once.
-LED1 blink rate changes immediately. LED2 flashes briefly on each press.
+**Success criteria:** Each press advances the speed exactly once. LED1 rate
+changes immediately. LED2 flashes briefly on each press.
 
 ---
 
 ## Common Traps
 
 - Writing TACTL before TACCR0 — timer fires at rate zero
-- Forgetting `bic.w #TAIFG, &TACTL` after detection — next poll fires instantly
-- Using `jz` instead of `jnz` for the skip branch — fires every tick except the target
-- Reloading the counter before the action (see Tutorial 02)
-- Using `bit.b` instead of `bit.w` on TACTL — TACTL is 16-bit
+- Forgetting `bic.w #TAIFG, &TACTL` — next poll fires instantly
+- Using `bit.b` on TACTL — TACTL is a 16-bit register
+- Reloading the counter before the action (toggle first, then reload)
