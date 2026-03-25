@@ -12,7 +12,7 @@
 ;   - Enable the CC0 interrupt with CCIE in TACCTL0 (before TACTL)
 ;   - After initialization, enter LPM0: bis.w #(GIE|CPUOFF), SR
 ;   - timer_isr: decrement counter, toggle + reload when zero, end with reti
-;   - Vector table: timer_isr at 0xFFF4
+;   - Vector table: timer_isr at 0xFFF2
 ;
 ; New register: TACCTL0 — Timer_A capture/compare control 0
 ; New bit:      CCIE    — CC0 interrupt enable
@@ -58,13 +58,13 @@ timer_isr:
     .word   0           ; 0xFFE6  unused
     .word   0           ; 0xFFE8  unused
     .word   0           ; 0xFFEA  ADC10
-    .word   0           ; 0xFFEC  USCI RX
-    .word   0           ; 0xFFEE  USCI TX
-    .word   0           ; 0xFFF0  unused
-    .word   0           ; 0xFFF2  Timer_A overflow
-    .word   timer_isr   ; 0xFFF4  Timer_A CC0  ← fill this in
-    .word   0           ; 0xFFF6  WDT
-    .word   0           ; 0xFFF8  unused
+    .word   0           ; 0xFFEC  USCI TX
+    .word   0           ; 0xFFEE  USCI RX
+    .word   0           ; 0xFFF0  Timer_A overflow (TAIV)
+    .word   timer_isr   ; 0xFFF2  Timer_A CC0  ← fill this in
+    .word   0           ; 0xFFF4  WDT
+    .word   0           ; 0xFFF6  Comparator_A+
+    .word   0           ; 0xFFF8  Timer1_A1
     .word   0           ; 0xFFFA  unused
     .word   0           ; 0xFFFC  unused
     .word   _start      ; 0xFFFE  Reset

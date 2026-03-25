@@ -61,13 +61,13 @@ timer_isr:
     .word   0           ; 0xFFE6  unused
     .word   0           ; 0xFFE8  unused
     .word   0           ; 0xFFEA  ADC10
-    .word   0           ; 0xFFEC  USCI RX
-    .word   0           ; 0xFFEE  USCI TX
-    .word   0           ; 0xFFF0  unused
-    .word   0           ; 0xFFF2  Timer_A overflow
-    .word   timer_isr   ; 0xFFF4  Timer_A CC0
-    .word   0           ; 0xFFF6  WDT
-    .word   0           ; 0xFFF8  unused
+    .word   0           ; 0xFFEC  USCI TX
+    .word   0           ; 0xFFEE  USCI RX
+    .word   0           ; 0xFFF0  Timer_A overflow (TAIV)
+    .word   timer_isr   ; 0xFFF2  Timer_A CC0
+    .word   0           ; 0xFFF4  WDT
+    .word   0           ; 0xFFF6  Comparator_A+
+    .word   0           ; 0xFFF8  Timer1_A1
     .word   0           ; 0xFFFA  unused
     .word   0           ; 0xFFFC  unused
     .word   _start      ; 0xFFFE  Reset

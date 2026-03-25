@@ -44,11 +44,12 @@ lesson-01-architecture/
 
 ## Suggested Path
 
-1. Read `tutorial-01-msp430g2553-overview.md`
-2. Read `tutorial-02-toolchain-workflow.md`
-3. Run the example: `cd examples && make flash`
-4. Attempt the exercises **before** looking at solutions
-5. When all three exercises pass, move to Lesson 02
+1. Skim `../common/glossary.md` — a quick-reference for all the acronyms and terminology used in this course. You don't need to memorize it now; come back whenever an abbreviation looks unfamiliar.
+2. Read `tutorial-01-msp430g2553-overview.md`
+3. Read `tutorial-02-toolchain-workflow.md`
+4. Run the example: `cd examples && make flash`
+5. Attempt the exercises **before** looking at solutions
+6. When all three exercises pass, move to Lesson 02
 
 ---
 

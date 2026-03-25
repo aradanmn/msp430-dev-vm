@@ -56,7 +56,7 @@ mov.w   #CCIE, &TACCTL0              ; enable CC0 interrupt
 mov.w   #(TASSEL_2|MC_1|TACLR), &TACTL
 ```
 
-**Vector address:** `0xFFF4` — position 10 in the table (counting from 0xFFE0).
+**Vector address:** `0xFFF2` — position 9 in the table (counting from 0xFFE0).
 
 ---
 
@@ -119,13 +119,13 @@ flag could trigger an ISR before your registers are initialized.
     .word   0           ; 0xFFE6  Port 2 / unused
     .word   0           ; 0xFFE8  unused
     .word   0           ; 0xFFEA  ADC10
-    .word   0           ; 0xFFEC  USCI_A0/B0 RX
-    .word   0           ; 0xFFEE  USCI_A0/B0 TX
-    .word   0           ; 0xFFF0  unused
-    .word   0           ; 0xFFF2  Timer_A overflow (TAIE/TAIFG)
-    .word   timer_isr   ; 0xFFF4  Timer_A CC0  ← this lesson
-    .word   0           ; 0xFFF6  WDT interval
-    .word   0           ; 0xFFF8  unused
+    .word   0           ; 0xFFEC  USCI_A0/B0 TX
+    .word   0           ; 0xFFEE  USCI_A0/B0 RX
+    .word   0           ; 0xFFF0  Timer_A overflow (TAIV)
+    .word   timer_isr   ; 0xFFF2  Timer_A CC0  ← this lesson
+    .word   0           ; 0xFFF4  WDT
+    .word   0           ; 0xFFF6  Comparator_A+
+    .word   0           ; 0xFFF8  Timer1_A1
     .word   0           ; 0xFFFA  unused
     .word   0           ; 0xFFFC  unused
     .word   _start      ; 0xFFFE  Reset

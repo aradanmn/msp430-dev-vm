@@ -21,7 +21,7 @@ instead of polling TAIFG. Behaviour is unchanged: LED1 blinks at 2 Hz.
 - Add `CCIE` to `TACCTL0` before starting the timer
 - Replace the polling main loop with `bis.w #(GIE|CPUOFF), SR`
 - Move the decrement/toggle/reload logic into a `timer_isr` subroutine ending with `reti`
-- Update the vector table: put `timer_isr` at position 0xFFF4
+- Update the vector table: put `timer_isr` at position 0xFFF2
 
 **Success criteria:** LED1 blinks at 2 Hz. No polling loop exists in the code.
 

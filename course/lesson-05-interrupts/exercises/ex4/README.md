@@ -33,7 +33,7 @@ handheld/
 - `main.s` includes `hal/timer.s` via `#include "hal/timer.s"` (same convention as defs.s)
 - `timer_init` sets up Timer_A CC0 with 5 ms tick and enables the interrupt
 - `timer_isr` fires every 5 ms; it decrements R4 and toggles LED1 on zero
-- `main.s` owns the vector table (timer_isr at 0xFFF4, _start at 0xFFFE)
+- `main.s` owns the vector table (timer_isr at 0xFFF2, _start at 0xFFFE)
 
 ## Register Usage (First Use of Convention)
 
