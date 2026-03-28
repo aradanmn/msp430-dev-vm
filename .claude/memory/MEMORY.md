@@ -5,6 +5,7 @@
 
 ## Feedback
 - [feedback_course_redesign.md](feedback_course_redesign.md) — Exercises must require thinking (datasheet, debugging, design), not transcription
+- [feedback_grading_honesty.md](feedback_grading_honesty.md) — Don't credit student for provided boilerplate; Scott values honest grading
 
 ## Project
 - [project_overview.md](project_overview.md) — MSP430 handheld gaming console, course structure, current state
@@ -13,6 +14,7 @@
 
 ## Reference
 - [reference_zed_extension.md](reference_zed_extension.md) — Zed MSP430 assembly extension at ~/Documents/zed-msp430-asm
+- [reference_zed_ide_setup.md](reference_zed_ide_setup.md) — Zed IDE tasks (build/flash/debug) and GDB terminal workflow
 
 ## Skills
 - [skills_bom.md](skills_bom.md) — bom skill for maintaining BOM files
