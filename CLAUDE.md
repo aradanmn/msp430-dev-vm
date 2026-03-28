@@ -44,22 +44,25 @@ course/
     ├── README.md
     ├── tutorial-01-*.md
     ├── tutorial-02-*.md
-    ├── examples/               ← Working demo (Makefile + *.s)
+    ├── examples/               ← Working demo (Makefile + *.s) — study AFTER exercises
     └── exercises/
         ├── README.md
-        ├── ex1/ ex2/ ex3/      ← Standalone concept practice (no solution/ dirs)
-        └── ex4/                ← Project milestone (L05+): spec for handheld/ addition
+        ├── ex1/                ← Explore: build it from concepts + datasheet
+        ├── ex2/                ← Challenge: debug broken code or solve a design problem
+        └── ex3/                ← Milestone (L02+): write real handheld/ module from spec
 
 handheld/                           ← Growing skeleton project (the capstone)
 ├── Makefile                        ← TARGET=main
 ├── registers.md                    ← Register allocation convention
-├── main.s                          ← _start, init, LPM0, vector table, game_update stub
-├── hal/
-│   ├── timer.s                     ← Timer_A CC0 ISR + tick counter        (L05)
-│   ├── spi.s                       ← USCI_B0 SPI driver                    (L06)
-│   ├── display.s                   ← SSD1325 OLED init + commands           (L07)
-│   ├── input.s                     ← SN74HC165N shift-register read         (L08)
-│   └── audio.s                     ← Timer_A PWM for buzzer                 (L09)
+├── main.s                          ← Minimal stub (student grows this via milestones)
+├── hal/                            ← ALL modules are student-created via milestone exercises
+│   ├── leds.s                      ← LED init + test pattern                (L02 milestone)
+│   ├── input.s                     ← Button debounce + read                 (L03 milestone)
+│   ├── timer.s                     ← Timer_A polling tick                   (L04 milestone)
+│   │                                  → converted to CC0 ISR + LPM0         (L05 milestone)
+│   ├── spi.s                       ← USCI_B0 SPI driver                    (L06 milestone)
+│   ├── display.s                   ← SSD1325 OLED init + commands           (L07 milestone)
+│   └── audio.s                     ← Timer_A PWM for buzzer                 (L09 milestone)
 ├── gfx/
 │   ├── framebuf.s                  ← 23LC1024 SRAM framebuffer ops          (L07)
 │   └── sprites.s                   ← Tile/sprite drawing primitives         (L10)
@@ -208,52 +211,56 @@ See `handheld/registers.md` for the full reference. Summary:
 
 ## Exercise Format Policy
 
-Solution directories have been removed from all lessons. Do not recreate them.
+Solution directories do not exist. Do not create them.
 
-Exercises use **progressive scaffold reduction** within each lesson:
-- **ex1** — behaviour spec + step-by-step requirements + formula hints
-- **ex2** — behaviour spec + requirements only; no pseudocode or structure hints
-- **ex3** — behaviour spec only; no register assignments, no subroutine interface hints, no algorithm templates; student derives all constants and structure
-- **ex4** — project milestone (L05+): spec + pointer to `handheld/`, tells student what to add/modify
+Each lesson has **3 exercises** (not 4), each with a distinct purpose:
 
-Ex1–ex3 are standalone (throwaway concept practice). Ex4 is cumulative (permanent addition to the handheld skeleton).
+- **Ex1 — Explore:** Build something that works. Tutorials provide conceptual understanding; from L04 onward the datasheet (SLAU144) provides register details. The student figures out the configuration, not copies it. Standalone LaunchPad demo.
+- **Ex2 — Challenge:** Debug broken code, solve a constraint problem, or make a design decision with real tradeoffs. Bugs must be realistic (config errors, not syntax tricks) and the buggy code must compile. At least one debug exercise per lesson from L02 onward.
+- **Ex3 — Milestone (L02+):** Write a real `handheld/hal/*.s` module from a behavioral spec and interface contract. This is permanent, cumulative code the student creates. No pre-built version is provided. L01 has no milestone (pure fundamentals).
 
-Each exercise explicitly states which prior lessons/exercises it builds on. New exercises for future lessons should follow this pattern.
+**Key principles:**
+- Tutorials teach concepts, not register recipes. Never hand out exact register bit patterns in exercises.
+- The MSP430x2xx Family User's Guide (SLAU144) is the primary reference from L04 onward.
+- If the student can solve an exercise by copying from the tutorial, it's too easy.
+- The student writes ALL handheld modules — nothing is pre-built.
+- Each exercise states which prior lessons/exercises it builds on.
 
-When grading: compare to the spec (not a solution file), note correctness first, call out one cosmetic issue max. Do not show the correct implementation.
+**When grading:** compare to the spec (not a solution file), note correctness first, call out one cosmetic issue max. Do not show the correct implementation. When the student has a bug, guide them toward finding it themselves rather than giving the fix.
 
-GAS constant arithmetic (`.equ FOO, (TICK_MS * 1000) - 1`) has been introduced and is the expected style for all timing constants from lesson 04 onward.
+GAS constant arithmetic (`.equ FOO, (TICK_MS * 1000) - 1`) is the expected style for all timing constants from lesson 04 onward.
 
-`clr.w` has NOT been introduced to the student yet (as of lesson 04). Do not suggest it.
+## Datasheet References
+
+The student should download these free PDFs from TI:
+
+- **MSP430x2xx Family User's Guide (SLAU144)** — the primary reference for all peripheral configuration
+  - Ch 8: Digital I/O (GPIO)
+  - Ch 12: Timer_A
+  - Ch 15: USCI — UART Mode
+  - Ch 16: USCI — SPI Mode
+  - Ch 17: USCI — I2C Mode
+  - Ch 22: ADC10
+- **MSP430G2553 Datasheet (SLAS735)** — pinout, electrical specs, pin function tables
 
 ## Student Progress
 
-**Last session:** 2026-03-24
+**Last session:** 2026-03-27
 
-**Completed exercises:**
-- Lessons 01–03: all exercises done (lessons fully complete)
-- Lesson 04 Ex1: ✅ 10/10 — Timer_A polling loop, TICK_PERIOD/BLINK_TICKS as `.equ`
-- Lesson 04 Ex2: ✅ 10/10 — dual-rate blinker, 5 ms tick, arithmetic in `.equ`
-- Lesson 04 Ex3: ✅ 8/10 — adjustable-speed blinker; all core logic correct; LED2 ack had label placement bug (bic.b outside branch, fixed by adding early ret); pass
+**Course restart:** Student completed L01–L05 under the old recipe-style format, then chose to restart from L01 with a redesigned approach (concept-driven, datasheet-referenced, student-builds-everything). Prior exercise solutions are in git history but no longer referenced.
 
-**Current position:** Lesson 05 (not yet started — read tutorials first)
+**Current position:** Lesson 01 (restart)
 
-**Student patterns observed:**
+**Student patterns observed (from first pass):**
 - Strong on constants and formulas; reaches for `.equ` arithmetic unprompted
-- Tends to over-scaffold subroutines (multi-case dispatch where increment-and-wrap suffices); improving
 - Gets flow control right once the bug is identified
 - Does not need pseudocode hints; spec alone is sufficient
-- Misread "flash briefly" as "toggle every tick" in ex3 LED2 — spec wording should be unambiguous in future exercises
-- Discovered `clr.w` independently (not yet formally introduced)
+- Makes transcription errors when copying patterns (not understanding errors) — further evidence the old approach wasn't teaching the material
+- Discovered `clr.w` independently
 
-**Lesson 04 notes for future reference:**
-- NUM_SPEEDS payoff: increment-and-wrap in change_speed (no dispatch needed there)
-- SPD_STATE0–3 constants belong in apply_speed only, not change_speed
-- Label placement bug pattern: code after a local label runs whether jump was taken or not
-
-**Course redesign (implemented):**
-- `handheld/` skeleton project grows with each lesson via ex4 project milestones
-- Each lesson adds one layer: ISR+sleep (L05), SPI (L06), display (L07), input (L08), etc.
-- By lesson 08 the skeleton is a working platform; Tetris drops in on top
-- L05 ex4 is the first milestone: main.s + hal/timer.s (game loop shell, CC0 ISR, LED heartbeat)
-- Student is moving to Zed editor; Claude Code runs in Zed's terminal pane (`cd project && claude`)
+**Course design (current):**
+- `handheld/` skeleton grows via student-created milestone exercises (ex3)
+- Each lesson adds one module: LEDs (L02), input (L03), timer (L04), ISR+LPM0 (L05), SPI (L06)
+- Tutorials teach concepts; datasheet (SLAU144) is the register reference from L04+
+- Debug exercises in every lesson from L02 onward
+- Student writes all code — no pre-built modules

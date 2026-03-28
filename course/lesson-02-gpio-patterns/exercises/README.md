@@ -1,69 +1,63 @@
 # Lesson 02 Exercises
 
-Work through these in order. Attempt each one **without** looking at the solution.
+Read both tutorials and flash the example first (`cd examples && make flash`).
+Study what the example does — but design your own solutions, don't copy its structure.
 
 ---
 
-## Exercise 1 — Counted Flash (Easy)
+## Exercise 1 — Build a Flash Subroutine
 
-**Problem:** Flash LED1 exactly 4 times (150ms on, 150ms off), then pause 800ms, then repeat forever.
-
-**What you need to know:**
-- Use a register (R7) as a counter.
-- Load it with `mov.w #4, R7`, then `dec.w R7` / `jnz` to loop.
-- `delay_ms` takes its argument in R12 and clobbers R12 and R13.
-  Keep your counter in R7 — it won't be touched by `delay_ms`.
-
-**Pass condition:** LED1 flashes 4 times, then goes dark for ~800ms, then repeats.
+**Requires:** Lesson 01 (delay_ms, bis.b/bic.b, subroutine calls)
 
 **File:** `ex1/ex1.s`
 
+Write a `flash_led` subroutine that flashes a given LED a given number of times
+at a given speed. Then call it from main to produce this sequence:
+
+1. Flash LED1 3 times at 200 ms on/off
+2. Flash LED2 4 times at 100 ms on/off
+3. 500 ms pause
+4. Repeat forever
+
+**You design the subroutine interface.** Decide:
+- Which register holds the LED bitmask?
+- Which register holds the flash count?
+- Which register holds the on/off time in ms?
+- Which registers does `delay_ms` clobber? Which are safe to use?
+
+**Success criteria:** LED1 flashes 3x slow, LED2 flashes 4x fast, pause, repeat.
+
 ---
 
-## Exercise 2 — Dual Throb (Medium)
+## Exercise 2 — Find the Bugs
 
-**Problem:** LED1 flashes 3 times fast (100ms on/off), then LED2 flashes 3 times fast (100ms on/off), then both are off for 500ms. Repeat forever.
-
-**What you need to know:**
-- You need two separate counted loops — one for each LED.
-- Use R7 as the counter for the LED1 burst, then reload R7 for the LED2 burst.
-- Make sure the other LED is off while the active one is flashing.
-
-**Pass condition:** LED1 throbs 3 times, then LED2 throbs 3 times, then a 500ms dark gap. Clearly sequential, never both on at the same time.
+**Requires:** Lesson 01–02 tutorials + Exercise 1
 
 **File:** `ex2/ex2.s`
 
----
+This code is supposed to flash LED1 and LED2 alternately, 5 times each, then
+pause and repeat. It compiles without errors, but it doesn't work correctly.
 
-## Exercise 3 — Mini State Machine (Hard)
+There are **3 bugs**. Find them, explain what each one does wrong, and fix them.
 
-**Problem:** Implement a 3-state LED machine that advances automatically through states:
+Write your explanations as comments next to each fix.
 
-- **State 0 (ATTRACT):** LED1 blinks 3 times at 400ms. Then advance to State 1.
-- **State 1 (RUNNING):** LED1 and LED2 alternate 6 times at 120ms. Then advance to State 2.
-- **State 2 (GAME OVER):** Both LEDs flash 4 times at 60ms, then 1s dark. Then back to State 0.
-
-**What you need to know:**
-- Store the current state in R8 (e.g. 0, 1, 2).
-- Use `cmp.w` and `jeq` to dispatch to the right state handler.
-- At the end of each state handler, update R8 and jump to the dispatcher.
-
-```asm
-; Dispatcher skeleton:
-state_dispatch:
-    cmp.w   #0, R8
-    jeq     state_attract
-    cmp.w   #1, R8
-    jeq     state_running
-    jmp     state_game_over
-```
-
-**Pass condition:** The three phases cycle continuously. State transitions are clean — no leftover LEDs on between phases.
-
-**File:** `ex3/ex3.s`
+**Success criteria:** After fixing all 3 bugs, LEDs alternate 5x each with
+a pause between rounds.
 
 ---
 
-## Solutions
+## Exercise 3 — Milestone: LED Test Module
 
-Solutions are in `exN/solution/`. Only look after you've made a genuine attempt.
+**Requires:** Lessons 01–02 + Exercises 1–2
+
+This is your first **handheld milestone**. Create a real module for the
+handheld platform.
+
+See `ex3/README.md` for the full spec, or go straight to `handheld/`.
+
+**What to create:** `handheld/hal/leds.s` with `leds_init` and `leds_test`.
+
+**Build & test:** `cd handheld && make && make flash`
+
+**Success criteria:** On reset, an LED test pattern plays once, then halts.

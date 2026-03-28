@@ -35,9 +35,9 @@ lesson-01-architecture/
 │   └── blink.s                      ← LED1 blinks at 1 Hz
 └── exercises/
     ├── README.md                    ← exercise descriptions
-    ├── ex1/   ex1/solution/         ← change the blink rate
-    ├── ex2/   ex2/solution/         ← alternate two LEDs
-    └── ex3/   ex3/solution/         ← SOS in Morse code
+    ├── ex1/                         ← turn on an LED (from scratch)
+    ├── ex2/                         ← blink with a delay loop (you design it)
+    └── ex3/                         ← SOS Morse code (you design the structure)
 ```
 
 ---
@@ -48,7 +48,7 @@ lesson-01-architecture/
 2. Read `tutorial-01-msp430g2553-overview.md`
 3. Read `tutorial-02-toolchain-workflow.md`
 4. Run the example: `cd examples && make flash`
-5. Attempt the exercises **before** looking at solutions
+5. Attempt the exercises — study the example *after* you've tried, not before
 6. When all three exercises pass, move to Lesson 02
 
 ---

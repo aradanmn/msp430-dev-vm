@@ -1,17 +1,17 @@
 ;******************************************************************************
-; Lesson 01 — Exercise 2: Alternating LEDs
+; Lesson 01 — Exercise 2: Timing by Counting
 ;
-; Make LED1 (P1.0, Red) and LED2 (P1.6, Green) alternate:
-;   - When LED1 is ON,  LED2 is OFF
-;   - When LED1 is OFF, LED2 is ON
-;   - Toggle every 250 ms
-;   - Starting state: LED1 ON, LED2 OFF
+; Blink LED1 at approximately 2 Hz (toggle every ~250 ms).
 ;
-; Hints:
-;   - Configure both P1.0 and P1.6 as outputs (one bis.b can set both bits)
-;   - Use bis.b / bic.b to explicitly set/clear each LED
-;     (don't use xor.b here — practice the set/clear pattern)
-;   - LED2 = BIT6 is already defined in the defs file
+; You need to write:
+;   1. A delay_ms subroutine (R12 = milliseconds to wait)
+;   2. A main loop that toggles LED1 and calls delay_ms
+;
+; Delay loop math (work this out yourself):
+;   - 1 MHz clock → 1 cycle = 1 µs
+;   - dec.w = 1 cycle, jnz (taken) = 2 cycles → 3 cycles per iteration
+;   - How many iterations for 1 ms (1000 µs)?
+;   - How do you make it wait R12 milliseconds?
 ;******************************************************************************
 
 #include "../../../common/msp430g2553-defs.s"
@@ -20,49 +20,45 @@
     .global _start
 
 _start:
-    ; --- 0. Initialize Stack Pointer ---
     mov.w   #0x0400, SP
-
     mov.w   #(WDTPW|WDTHOLD), &WDTCTL
-
     clr.b   &DCOCTL
     mov.b   &CALBC1_1MHZ, &BCSCTL1
     mov.b   &CALDCO_1MHZ, &DCOCTL
 
-    ; TODO: configure both LED1 and LED2 as outputs
-    bis.b #(LED1|LED2), &P1DIR
+    ; LED1 as output, start OFF
+    bis.b   #LED1, &P1DIR
+    bic.b   #LED1, &P1OUT
 
-    ; TODO: set initial state: LED1 ON, LED2 OFF
-    bis.b #LED1, &P1OUT
-    bic.b #LED2, &P1OUT
+    ; Your main loop here
+main:
 
-main_loop:
-    ; TODO: phase A — LED1 ON, LED2 OFF, wait 250 ms
-    bis.b #LED1, &P1OUT
-    bic.b #LED2, &P1OUT
-    
-    mov.w #250, R12     ; delay 250ms
+    mov.w   #250,   R12 ; 250ms
+    xor.b   #LED1,  &P1OUT
     call #delay_ms
-    
-    ; TODO: phase B — LED1 OFF, LED2 ON, wait 250 ms
-    bic.b #LED1, &P1OUT
-    bis.b #LED2, &P1OUT
-    
-    mov.w #250, R12
-    call #delay_ms
-    
-    jmp     main_loop
 
+    jmp main
+
+    ; Your delay_ms subroutine here
 delay_ms:
-    mov.w   #333, R13
-.Ldms_inner:
-    dec.w   R13
-    jnz     .Ldms_inner
+
     dec.w   R12
-    jnz     delay_ms
+    mov.w   #333,   R11 ; 1MHz is 1,000,000 uS. 999 is ~ 1 mS.
+    call #.Lburn_cycles
+    cmp.w   #0, R12
+    jnz delay_ms
+    ret
+.Lburn_cycles:
+    dec.w   R11
+    cmp.w   #0, R11
+    jnz .Lburn_cycles
     ret
 
+;==============================================================================
+; Interrupt Vector Table
+;==============================================================================
     .section ".vectors","ax",@progbits
-    .word   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .word   0,0,0,0, 0,0,0,0
+    .word   0,0,0,0, 0,0,0
     .word   _start
     .end

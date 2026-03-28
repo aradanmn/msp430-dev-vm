@@ -1,14 +1,19 @@
 ;******************************************************************************
-; Lesson 02 — Exercise 1: Counted Flash
+; Lesson 02 — Exercise 1: Build a Flash Subroutine
 ;
-; Flash LED1 exactly 4 times (150ms on, 150ms off),
-; then pause 800ms, then repeat forever.
+; Write a flash_led subroutine, then use it to produce:
+;   1. Flash LED1 3 times at 200 ms on/off
+;   2. Flash LED2 4 times at 100 ms on/off
+;   3. 500 ms pause
+;   4. Repeat forever
 ;
-; Hints:
-;   - Use R7 as your flash counter: mov.w #4, R7
-;   - Loop body: LED on, delay, LED off, delay, dec R7, jnz
-;   - delay_ms takes its argument in R12 (it clobbers R12 and R13)
-;   - R7 is safe across delay_ms calls — use it freely as your counter
+; You design the subroutine interface:
+;   - Which register = LED bitmask?
+;   - Which register = flash count?
+;   - Which register = on/off time (ms)?
+;
+; Remember: delay_ms clobbers R12 and R13.
+; Registers R4–R11 survive delay_ms calls.
 ;******************************************************************************
 
 #include "../../../common/msp430g2553-defs.s"
@@ -17,42 +22,28 @@
     .global _start
 
 _start:
-    ; --- 0. Initialize Stack Pointer ---
     mov.w   #0x0400, SP
-
     mov.w   #(WDTPW|WDTHOLD), &WDTCTL
-
     clr.b   &DCOCTL
     mov.b   &CALBC1_1MHZ, &BCSCTL1
     mov.b   &CALDCO_1MHZ, &DCOCTL
 
-    ; TODO: configure LED1 as output, start with LED off
-    bis.b   #LED1, &P1DIR
-    bic.b   #LED1, &P1OUT
+    bis.b   #(LED1|LED2), &P1DIR
+    bic.b   #(LED1|LED2), &P1OUT
 
 main_loop:
-    ; TODO: flash LED1 exactly 4 times (150ms on, 150ms off)
-    call #toggle_led
-
-    ; TODO: pause 800ms
-    mov.w #800, R12
-    call #delay_ms
+    ; Your code here: call flash_led for LED1, then LED2, then pause
 
     jmp     main_loop
 
-toggle_led:
-    mov.w #4, R7
-.Ltled_inner:
-    bis.b   #LED1, &P1OUT
-    mov.w   #150, R12
-    call    #delay_ms
-    bic.b   #LED1, & P1OUT
-    mov.w   #150, R12
-    call    #delay_ms
-    dec.w R7
-    jnz .Ltled_inner
-    ret
-    
+;==============================================================================
+; flash_led — your subroutine (design the interface yourself)
+;==============================================================================
+; Your code here
+
+;==============================================================================
+; delay_ms — from Lesson 01
+;==============================================================================
 delay_ms:
     mov.w   #333, R13
 .Ldms_inner:
@@ -63,6 +54,7 @@ delay_ms:
     ret
 
     .section ".vectors","ax",@progbits
-    .word   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .word   0,0,0,0, 0,0,0,0
+    .word   0,0,0,0, 0,0,0
     .word   _start
     .end

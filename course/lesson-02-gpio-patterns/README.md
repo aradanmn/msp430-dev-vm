@@ -38,9 +38,9 @@ lesson-02-gpio-patterns/
 │   └── patterns.s                   ← 3-phase game-state demo
 └── exercises/
     ├── README.md                    ← exercise descriptions
-    ├── ex1/   ex1/solution/         ← counted flash
-    ├── ex2/   ex2/solution/         ← dual throb
-    └── ex3/   ex3/solution/         ← mini state machine
+    ├── ex1/                         ← build a flash subroutine (you design the interface)
+    ├── ex2/                         ← find the bugs (3 bugs in broken code)
+    └── ex3/                         ← milestone: create handheld/hal/leds.s
 ```
 
 ---
@@ -50,8 +50,8 @@ lesson-02-gpio-patterns/
 1. Read `tutorial-01-gpio-output.md`
 2. Read `tutorial-02-patterns-and-state.md`
 3. Run the example: `cd examples && make flash`
-4. Attempt the exercises **before** looking at solutions
-5. When all three pass, move to Lesson 03
+4. Attempt the exercises — study the example *after*, not before
+5. When all three pass (including the handheld milestone), move to Lesson 03
 
 ---
 

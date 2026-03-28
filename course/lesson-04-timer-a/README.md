@@ -45,9 +45,9 @@ lesson-04-timer-a/
 │   └── timer.s                         ← two LEDs at different rates from one timer
 └── exercises/
     ├── README.md
-    ├── ex1/   ex1/solution/            ← hardware blink at 2 Hz
-    ├── ex2/   ex2/solution/            ← dual-rate blinker
-    └── ex3/   ex3/solution/            ← adjustable speed (button + timer together)
+    ├── ex1/                            ← timer from the datasheet (SLAU144 Ch12)
+    ├── ex2/                            ← timing analysis challenge (real tradeoffs)
+    └── ex3/                            ← milestone: create handheld/hal/timer.s
 ```
 
 ---
@@ -58,7 +58,8 @@ lesson-04-timer-a/
 2. Read `tutorial-02-timing-patterns.md`
 3. Run the example: `cd examples && make flash`
    - Watch LED1 (2 Hz) and LED2 (5 Hz) blink at different rates simultaneously
-4. Attempt exercises **before** looking at solutions
+4. Attempt exercises — study the example *after*, not before
+5. **Datasheet:** MSP430x2xx Family User's Guide (SLAU144), Chapter 12
 
 ---
 

@@ -39,14 +39,12 @@ After this lesson you can write that skeleton. The display and game logic fill i
 
 1. `tutorial-01-interrupts.md` — how interrupts work, ISR anatomy
 2. `tutorial-02-lpm0.md` — CPU sleep, wake on interrupt, power budget
+3. **Datasheet:** SLAU144 Chapter 12 (Timer_A), especially the CC0 interrupt section
 
 ## Then
 
-```sh
-cd examples && make flash
-```
-
-Observe LED1 blinking at 2 Hz with the CPU asleep between ticks.
+Attempt the exercises. Flash the example (`cd examples && make flash`) *after*
+you've tried Exercise 1 — it shows interrupt-driven blink with the CPU asleep.
 
 ## Exercises
 

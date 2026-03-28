@@ -46,9 +46,9 @@ lesson-03-gpio-input/
 │   └── button.s                       ← three input modes in one demo
 └── exercises/
     ├── README.md                      ← exercise descriptions
-    ├── ex1/                           ← level detection
-    ├── ex2/                           ← edge detection + toggle
-    └── ex3/                           ← press-to-cycle state machine
+    ├── ex1/                           ← toggle without debounce (see the problem)
+    ├── ex2/                           ← design your own debounce (fix the problem)
+    └── ex3/                           ← milestone: create handheld/hal/input.s
 ```
 
 ---
@@ -61,7 +61,7 @@ lesson-03-gpio-input/
    - Hold S2: LED1 follows the button (level mode)
    - Release: watch the transition phase
    - After 3 seconds: edge mode — each press toggles LED1
-4. Attempt the exercises **before** reading any solutions
+4. Attempt the exercises — study the example *after*, not before
 
 ---
 

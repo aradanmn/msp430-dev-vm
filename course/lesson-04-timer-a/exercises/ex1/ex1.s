@@ -1,40 +1,22 @@
 ;******************************************************************************
-; Lesson 04 — Exercise 1: Hardware Blink
+; Lesson 04 — Exercise 1: Timer from the Datasheet
 ;
-; Behaviour:
-;   LED1 blinks at exactly 2 Hz (toggle every 250 ms) using Timer_A.
-;   No delay_ms. No call instructions in the main loop.
+; Blink LED1 at 2 Hz (toggle every 250 ms) using Timer_A in polling mode.
 ;
-; Requirements:
-;   - TICK_PERIOD: TACCR0 value for your chosen tick interval (compute it)
-;   - BLINK_TICKS: number of ticks per LED toggle (compute it)
-;   - Write TACCR0 first, then TACTL (SMCLK, up mode, clear)
-;   - Main loop: poll TAIFG with bit.w, clear with bic.w, decrement
-;     counter, toggle + reload when counter reaches zero
-;   - All timing values as .equ constants — no magic numbers
+; Your job:
+;   1. Open SLAU144 Chapter 12 (Timer_A)
+;   2. Find the registers and bit fields you need
+;   3. Choose a tick interval, compute the compare value
+;   4. Write the polling loop
 ;
-; Period formula (SMCLK = 1 MHz):
-;   TACCR0 = (tick_ms × 1000) − 1
-;   e.g.  5 ms tick → TACCR0 = 4999
+; What you need from the datasheet:
+;   - The capture/compare register (sets the period)
+;   - The control register (selects clock source and mode)
+;   - The overflow flag (tells you when a tick has elapsed)
+;   - How to clear the flag
 ;
-; Tick count formula:
-;   BLINK_TICKS = target_ms / tick_ms
-;   e.g.  250 ms / 5 ms = 50 ticks
-;
-; Hint — main loop structure:
-;
-;   main_loop:
-;       poll TAIFG with bit.w → jz back to main_loop
-;       clear TAIFG with bic.w
-;       dec.w counter register
-;       jnz main_loop          ← skip toggle if not yet time
-;       toggle LED1
-;       reload counter
-;       jmp main_loop
-;
-; New instructions:
-;   bit.w  src, dst   — same as bit.b but tests 16-bit registers
-;   bic.w  src, dst   — same as bic.b but clears bits in 16-bit registers
+; Clock: SMCLK = 1 MHz after DCO calibration.
+; Use .equ for ALL timing constants. Define TICK_MS and derive the rest.
 ;******************************************************************************
 
 #include "../../../common/msp430g2553-defs.s"
@@ -42,11 +24,7 @@
     .text
     .global _start
 
-;==============================================================================
-; Timing constants — fill in the correct values
-;==============================================================================
-.equ TICK_PERIOD,   4999       ; TODO: TACCR0 value for your chosen tick interval
-.equ BLINK_TICKS,   50       ; TODO: number of ticks per 250 ms
+; Your timing constants here (use .equ arithmetic)
 
 _start:
     mov.w   #0x0400, SP
@@ -55,35 +33,18 @@ _start:
     mov.b   &CALBC1_1MHZ, &BCSCTL1
     mov.b   &CALDCO_1MHZ, &DCOCTL
 
-    ; TODO: configure LED1 as output, start OFF
     bis.b   #LED1, &P1DIR
     bic.b   #LED1, &P1OUT
 
-    ; TODO: configure Timer_A
-    ;   Step 1: set the period register
-    ;   Step 2: start the timer (SMCLK, up mode, clear TAR)
-    mov.w   #TICK_PERIOD, &TACCR0   ; Set TACCRO to 4999
-    mov.w   #(TASSEL_2|MC_1|TACLR), &TACTL  ; TASSEL_2 = SMCLK, MC_1 = Count up 0 to TACCR0, TACLR = reset TAR to 0
+    ; Your Timer_A setup here
 
-    ; TODO: load tick-down counter into a register (R6 recommended)
-    mov.w #BLINK_TICKS, R6
-
-; TODO: main loop — poll, clear, decrement, toggle, reload
-main_loop:
-
-    bit.w #TAIFG, &TACTL    ; Read bit 0 TAIFG in TACTL register
-    jz  main_loop
-    bic.w #TAIFG, &TACTL    ; clear flag as soon as we detect it.
-    dec.w R6               ; decrement R6 by 1
-    jnz main_loop
-    xor.b #LED1, &P1OUT     ; Toggle on/off LED1
-    mov.w #BLINK_TICKS, R6  ; reload counter
-    jmp     main_loop       ; placeholder — replace with your implementation
+    ; Your polling main loop here
 
 ;==============================================================================
 ; Interrupt Vector Table
 ;==============================================================================
     .section ".vectors","ax",@progbits
-    .word   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .word   0,0,0,0, 0,0,0,0
+    .word   0,0,0,0, 0,0,0
     .word   _start
     .end

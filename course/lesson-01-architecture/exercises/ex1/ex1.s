@@ -1,10 +1,14 @@
 ;******************************************************************************
-; Lesson 01 — Exercise 1: Faster Blink
+; Lesson 01 — Exercise 1: First Light
 ;
-; TODO: Change the blink rate from 1 Hz to 4 Hz.
-;       LED1 should toggle every 125 ms.
+; Turn on LED1. That's it.
 ;
-; Hint: Only one number needs to change.
+; LED1 is on P1.0. Figure out:
+;   1. Which register makes a pin an output?
+;   2. Which register drives the pin high?
+;   3. Which instruction sets one bit without changing the others?
+;
+; Read Tutorial 01 (GPIO section) if you're stuck.
 ;******************************************************************************
 
 #include "../../../common/msp430g2553-defs.s"
@@ -13,33 +17,23 @@
     .global _start
 
 _start:
+    mov.w   #0x0400, SP
     mov.w   #(WDTPW|WDTHOLD), &WDTCTL
-
     clr.b   &DCOCTL
     mov.b   &CALBC1_1MHZ, &BCSCTL1
     mov.b   &CALDCO_1MHZ, &DCOCTL
 
-    bis.b   #LED1, &P1DIR
-    bic.b   #LED1, &P1OUT
+    ; Your code here: turn on LED1
+    bis.b   #LED1,  &P1DIR
+    bis.b   #LED1,  &P1OUT
+halt:
+    jmp     halt
 
-main_loop:
-    xor.b   #LED1, &P1OUT
-
-    mov.w   #125, R12               ; TODO: change this value
-    call    #delay_ms
-
-    jmp     main_loop
-
-delay_ms:
-    mov.w   #333, R13
-.Ldms_inner:
-    dec.w   R13
-    jnz     .Ldms_inner
-    dec.w   R12
-    jnz     delay_ms
-    ret
-
+;==============================================================================
+; Interrupt Vector Table
+;==============================================================================
     .section ".vectors","ax",@progbits
-    .word   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .word   0,0,0,0, 0,0,0,0
+    .word   0,0,0,0, 0,0,0
     .word   _start
     .end

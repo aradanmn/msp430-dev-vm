@@ -1,15 +1,16 @@
 ;******************************************************************************
-; Lesson 02 — Exercise 2: Dual Throb
+; Lesson 02 — Exercise 2: Find the Bugs
 ;
-; LED1 flashes 3× fast (100ms on/off),
-; then LED2 flashes 3× fast (100ms on/off),
-; then both off for 500ms, repeat forever.
+; This code is supposed to:
+;   1. Flash LED1 five times (150 ms on/off)
+;   2. Flash LED2 five times (150 ms on/off)
+;   3. Pause 500 ms
+;   4. Repeat
 ;
-; Hints:
-;   - You need two separate counted loops, one after the other.
-;   - Reload R7 with #3 before each burst.
-;   - Make sure the inactive LED is explicitly off during each burst
-;     (use bic.b to be certain).
+; It compiles, but doesn't work correctly. There are 3 bugs.
+;
+; Find each bug, fix it, and write a comment explaining what was wrong
+; and why the fix is correct.
 ;******************************************************************************
 
 #include "../../../common/msp430g2553-defs.s"
@@ -24,51 +25,44 @@ _start:
     mov.b   &CALBC1_1MHZ, &BCSCTL1
     mov.b   &CALDCO_1MHZ, &DCOCTL
 
-    ; TODO: configure both LEDs as outputs, both off
-    bis.b   #(LED1|LED2), &P1DIR
+    bis.b   #LED1, &P1DIR               ; LED1 output
+    bic.b   #LED2, &P1DIR               ; LED2 output          ; BUG 1
     bic.b   #(LED1|LED2), &P1OUT
 
 main_loop:
-    ; TODO: flash LED1 3× at 100ms (LED2 off during this burst)
-    ; first ensure LED2 is off
-    bic.b #LED2, &P1OUT
-    ; second flash LED1 3x
-    mov.w #LED1, R4
-    mov.w #3,   R5
-    mov.w #100, R6
-    call #flash_leds
-    ; TODO: flash LED2 3× at 100ms (LED1 off during this burst)
-    ; first ensure LED1 is off
-    bic.b #LED1, & P1OUT
-    ; second flash LED2 3x
-    mov.w #LED2, R4
-    mov.w #3,   R5
-    mov.w #100, R6
-    call #flash_leds
+    ; --- Flash LED1 five times ---
+    mov.w   #5, R7
+.Lflash1:
+    bis.b   #LED1, &P1OUT
+    mov.b   #150, R12                                           ; BUG 2
+    call    #delay_ms
+    bic.b   #LED1, &P1OUT
+    mov.w   #150, R12
+    call    #delay_ms
+    dec.w   R7
+    jnz     .Lflash1
 
-    ; TODO: 500ms dark gap
-    mov.w #500, R12
-    call #delay_ms
-    
+    ; --- Flash LED2 five times ---
+    mov.w   #5, R7
+.Lflash2:
+    bis.b   #LED2, &P1OUT
+    mov.w   #150, R12
+    call    #delay_ms
+    bis.b   #LED2, &P1OUT                                       ; BUG 3
+    mov.w   #150, R12
+    call    #delay_ms
+    dec.w   R7
+    jnz     .Lflash2
+
+    ; --- Pause ---
+    mov.w   #500, R12
+    call    #delay_ms
+
     jmp     main_loop
-; flash_leds - flash one led or more LEDs a fixed number of times
-;
-; Args: R4 = LED bitmask    (e.q. LED1, or LED2, or LED1|LED2)
-;       R5 = flash count
-;       R6 = LED on/off time in ms.
 
-flash_leds:
-    bis.b   R4, &P1OUT
-    mov.w   R6, R12
-    call    #delay_ms
-    bic.b   R4, &P1OUT
-    mov.w   R6, R12
-    call    #delay_ms
-    dec.w   R5
-    jnz     flash_leds
-    ret
-
-
+;==============================================================================
+; delay_ms
+;==============================================================================
 delay_ms:
     mov.w   #333, R13
 .Ldms_inner:
@@ -79,6 +73,7 @@ delay_ms:
     ret
 
     .section ".vectors","ax",@progbits
-    .word   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    .word   0,0,0,0, 0,0,0,0
+    .word   0,0,0,0, 0,0,0
     .word   _start
     .end

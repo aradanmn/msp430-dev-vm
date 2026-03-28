@@ -1,23 +1,19 @@
 ;******************************************************************************
-; Lesson 05 — Exercise 1: Interrupt-Driven Blink
+; Lesson 05 — Exercise 1: Convert to Interrupt-Driven
 ;
-; Builds on Lesson 04 Exercise 1 — same behaviour, different mechanism.
+; Take your L04 Timer_A polling blink and convert to CC0 interrupt + LPM0.
 ;
-; Behaviour:
-;   LED1 blinks at exactly 2 Hz (toggle every 250 ms).
-;   No polling loop. CPU sleeps in LPM0 between ticks.
+; What changes from your L04 code:
+;   - TAIFG polling loop → gone
+;   - Add CCIE to enable the CC0 interrupt (which register? look it up)
+;   - Main ends with bis.w #(GIE|CPUOFF), SR — CPU sleeps
+;   - Decrement/toggle/reload logic moves into timer_isr, ending with reti
+;   - Vector table: timer_isr at the CC0 vector address
 ;
-; Requirements:
-;   - Reuse your TICK_PERIOD and BLINK_TICKS constants from L04-Ex1
-;   - Enable the CC0 interrupt with CCIE in TACCTL0 (before TACTL)
-;   - After initialization, enter LPM0: bis.w #(GIE|CPUOFF), SR
-;   - timer_isr: decrement counter, toggle + reload when zero, end with reti
-;   - Vector table: timer_isr at 0xFFF2
-;
-; New register: TACCTL0 — Timer_A capture/compare control 0
-; New bit:      CCIE    — CC0 interrupt enable
-; New instructions: reti (return from interrupt, restores SR)
-;                   bis.w #(GIE|CPUOFF), SR  (enter LPM0)
+; Questions:
+;   - Where is the CCIE bit? (Hint: it's not in TACTL)
+;   - What vector address is CC0? (Check SLAU144 or msp430g2553-defs.s)
+;   - What's the difference between reti and ret? Try using ret — what happens?
 ;******************************************************************************
 
 #include "../../../common/msp430g2553-defs.s"
@@ -25,9 +21,7 @@
     .text
     .global _start
 
-.equ TICK_MS,       0       ; TODO
-.equ TICK_PERIOD,   0       ; TODO: (TICK_MS * 1000) - 1
-.equ BLINK_TICKS,   0       ; TODO: 250 / TICK_MS
+; Your timing constants (carry over from L04)
 
 _start:
     mov.w   #0x0400, SP
@@ -36,17 +30,17 @@ _start:
     mov.b   &CALBC1_1MHZ, &BCSCTL1
     mov.b   &CALDCO_1MHZ, &DCOCTL
 
-    ; TODO: configure LED1 as output, start OFF
-    ; TODO: configure Timer_A with CC0 interrupt enabled
-    ; TODO: initialize R6 = BLINK_TICKS
-    ; TODO: enter LPM0
+    bis.b   #LED1, &P1DIR
+    bic.b   #LED1, &P1OUT
+
+    ; Your Timer_A setup here (add CC0 interrupt enable)
+
+    ; Initialize tick counter, then enter LPM0
 
 ;==============================================================================
-; Timer_A CC0 ISR
+; timer_isr — your CC0 ISR
 ;==============================================================================
-timer_isr:
-    ; TODO: decrement R6, toggle LED1 and reload when zero
-    reti
+; Your ISR code here
 
 ;==============================================================================
 ; Interrupt Vector Table
@@ -61,7 +55,7 @@ timer_isr:
     .word   0           ; 0xFFEC  USCI TX
     .word   0           ; 0xFFEE  USCI RX
     .word   0           ; 0xFFF0  Timer_A overflow (TAIV)
-    .word   timer_isr   ; 0xFFF2  Timer_A CC0  ← fill this in
+    .word   0           ; 0xFFF2  Timer_A CC0
     .word   0           ; 0xFFF4  WDT
     .word   0           ; 0xFFF6  Comparator_A+
     .word   0           ; 0xFFF8  Timer1_A1

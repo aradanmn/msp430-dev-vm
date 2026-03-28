@@ -1,65 +1,75 @@
 # Lesson 05 Exercises
 
-Run the example first (`cd examples && make flash`). Notice: there is no
-polling loop. The CPU sleeps. The ISR is the entire program.
-
-Each exercise converts a Lesson 04 program from polling to interrupt-driven.
-The behaviour is identical — only the mechanism changes.
+Read both tutorials first. Then flash the example (`cd examples && make flash`)
+to see an interrupt-driven blink with the CPU sleeping.
 
 ---
 
-## Exercise 1 — Interrupt-Driven Blink
+## Exercise 1 — Convert to Interrupt-Driven
 
-**Requires:** Lessons 1–4 + Tutorial 01 (CC0 interrupt, CCIE, reti)
+**Requires:** Lessons 01–04 + Tutorial 01 (CC0 interrupt, CCIE, reti)
 
 **File:** `ex1/ex1.s`
 
-Convert your Lesson 04 Exercise 1 solution to use the Timer_A CC0 interrupt
-instead of polling TAIFG. Behaviour is unchanged: LED1 blinks at 2 Hz.
+Take your Timer_A polling blink from Lesson 04 and convert it to use the
+CC0 interrupt + LPM0. The LED1 heartbeat behavior is identical — only the
+mechanism changes.
 
-**What changes from L04-Ex1:**
-- Add `CCIE` to `TACCTL0` before starting the timer
-- Replace the polling main loop with `bis.w #(GIE|CPUOFF), SR`
-- Move the decrement/toggle/reload logic into a `timer_isr` subroutine ending with `reti`
-- Update the vector table: put `timer_isr` at position 0xFFF2
+**What changes:**
+- The TAIFG polling loop disappears entirely
+- CCIE bit enables the CC0 interrupt (look up where it goes — which register?)
+- `_start` ends with `bis.w #(GIE|CPUOFF), SR` — CPU sleeps
+- The decrement/toggle/reload logic moves into a `timer_isr` ending with `reti`
+- The vector table needs `timer_isr` at the correct address (which one? Check
+  SLAU144 or the interrupt vector table in `msp430g2553-defs.s`)
 
-**Success criteria:** LED1 blinks at 2 Hz. No polling loop exists in the code.
+**Key question:** Why `reti` and not `ret`? What does `reti` restore that
+`ret` doesn't? What happens if you use `ret` instead? (Try it.)
+
+**Success criteria:** LED1 blinks at 2 Hz. No polling loop exists. CPU is in LPM0.
 
 ---
 
-## Exercise 2 — Interrupt-Driven Dual-Rate Blinker
+## Exercise 2 — ISR Timing Budget
 
-**Requires:** Lessons 1–4 + Exercise 1 (CC0 ISR structure)
+**Requires:** Lessons 01–04 + Exercise 1 (working ISR)
 
 **File:** `ex2/ex2.s`
 
-Convert your Lesson 04 Exercise 2 solution to interrupt-driven. Both LED
-channels move into the ISR. Main sleeps.
+This exercise teaches you what happens when an ISR takes too long.
 
-**Success criteria:** LED1 at 1 Hz, LED2 at 4 Hz, CPU in LPM0 between ticks.
+A 5 ms tick gives you 5000 CPU cycles per ISR invocation. What happens when
+the ISR uses more than that?
+
+**Part A — Observe the failure:**
+The provided code has a `timer_isr` that calls `slow_work` — a subroutine
+that burns ~6 ms (6000 cycles). With a 5 ms tick, the ISR takes longer than
+one tick period.
+
+Build and flash. What happens to LED1? It should blink at 2 Hz — does it?
+Why not?
+
+**Part B — Fix it:**
+Redesign so the work is spread across multiple ticks. Instead of doing 6 ms
+of work every tick, do 1 ms of work on 6 consecutive ticks (or skip work on
+most ticks and only run it every Nth tick).
+
+Your redesigned ISR must complete well within 5 ms on every tick.
+
+**Success criteria:** LED1 blinks at 2 Hz again. The ISR never overruns
+the tick period. Write comments explaining your timing budget.
 
 ---
 
-## Exercise 3 — Interrupt-Driven Adjustable-Speed Blinker
+## Exercise 3 — Milestone: Game Loop Shell
 
-**Requires:** Lessons 1–4 + Exercises 1–2 (full ISR-driven tick loop)
+**Requires:** Lessons 01–05 + Exercises 1–2
 
-**File:** `ex3/ex3.s`
+**What to modify:** `handheld/hal/timer.s` and `handheld/main.s`
 
-Convert your Lesson 04 Exercise 3 solution to interrupt-driven. The entire
-main loop — LED1 blink, LED2 ack, button edge detection — moves into the ISR.
-Main initializes registers and sleeps.
+See `ex3/README.md` for the full spec.
 
-**Success criteria:** Behaviour identical to L04-Ex3. CPU sleeps between ticks.
-No polling loop.
+**Build & test:** `cd handheld && make && make flash`
 
----
-
-## Exercise 4 — Project Milestone: Handheld Skeleton
-
-**Requires:** Lessons 1–5 tutorials + Exercises 1–3
-
-Now apply what you've learned to the **handheld gaming platform**. Create the
-game loop shell in `handheld/` — Timer_A CC0 ISR, LPM0 sleep, LED heartbeat.
-
-See `exercises/ex4/README.md` for the full spec, or jump straight to `handheld/`.
+**Success criteria:** LED1 blinks at 2 Hz. LED2 pulses once on startup.
+CPU sleeps in LPM0 between ticks.

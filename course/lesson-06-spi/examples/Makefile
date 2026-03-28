@@ -1,4 +1,4 @@
-TARGET  = ex3
+TARGET  = loopback
 MCU     = msp430g2553
 
 TI_GCC  := $(HOME)/ti/msp430-gcc/bin/msp430-elf-gcc
