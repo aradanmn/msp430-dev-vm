@@ -6,6 +6,7 @@
 ## Feedback
 - [feedback_course_redesign.md](feedback_course_redesign.md) — Exercises must require thinking (datasheet, debugging, design), not transcription
 - [feedback_grading_honesty.md](feedback_grading_honesty.md) — Don't credit student for provided boilerplate; Scott values honest grading
+- [feedback_sections_gap.md](feedback_sections_gap.md) — .text/.section directives never taught but used everywhere; caused real #include bug
 
 ## Project
 - [project_overview.md](project_overview.md) — MSP430 handheld gaming console, course structure, current state

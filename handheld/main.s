@@ -13,6 +13,7 @@
     .global _start
 
 _start:
+
     mov.w   #0x0400, SP                 ; init stack pointer (top of RAM)
     mov.w   #(WDTPW|WDTHOLD), &WDTCTL  ; disable watchdog
     clr.b   &DCOCTL
@@ -20,9 +21,15 @@ _start:
     mov.b   &CALDCO_1MHZ, &DCOCTL
 
     ; --- Your init code grows here via milestone exercises ---
-
+    call #leds_init
+    call #leds_test
 halt:
     jmp     halt                        ; spin until you add LPM0 (L05)
+
+;==============================================================================
+; Included modules (after halt — only reached via call)
+;==============================================================================
+#include "hal/led.s"
 
 ;==============================================================================
 ; Interrupt Vector Table

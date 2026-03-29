@@ -16,7 +16,7 @@ Single repo at github.com/aradanmn/msp430-tetris. 16-lesson assembly course buil
 - 23LC1024-I/P (128KB SPI SRAM, DIP-8) — framebuffer + game state
 - W25Q32JVDIQ (4MB SPI NOR Flash, DIP-8) — sprites, music, save data
 
-**Course progress:** Student restarted from L01 under redesigned format. L01 exercises graded 2026-03-28: Ex1 (A), Ex2 (B+), Ex3 (C+). Ex3 needs revision — SOS pattern produces 1-1-1 flashes instead of 3-3-3, missing inter-element gaps.
+**Course progress:** Student restarted from L01 under redesigned format. L01 graded 2026-03-28: Ex1 (A), Ex2 (B+), Ex3 (C+). L02 graded 2026-03-29: Ex1 (B+), Ex2 (A-), Ex3 (A-). First handheld module (hal/led.s) complete and integrated. Key learning: register clobbering by delay_ms, .text section placement for #include.
 
 **Course redesign (done 2026-03-24):** `handheld/` skeleton project grows with each lesson. Ex3 in each lesson is a project milestone that adds to `handheld/`. L05 ex4 = first milestone (main.s + hal/timer.s — game loop shell, CC0 ISR, LED heartbeat). Standalone ex1–ex2 stay for concept practice.
 

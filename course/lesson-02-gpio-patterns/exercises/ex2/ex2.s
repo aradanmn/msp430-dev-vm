@@ -26,7 +26,10 @@ _start:
     mov.b   &CALDCO_1MHZ, &DCOCTL
 
     bis.b   #LED1, &P1DIR               ; LED1 output
-    bic.b   #LED2, &P1DIR               ; LED2 output          ; BUG 1
+; the bug is that you are setting the GPIO direction as an input instead of
+; an output
+;    bic.b   #LED2, &P1DIR               ; LED2 output          ; BUG 1
+    bis.b   #LED2,  &P1DIR              ; this is correct
     bic.b   #(LED1|LED2), &P1OUT
 
 main_loop:
@@ -34,7 +37,8 @@ main_loop:
     mov.w   #5, R7
 .Lflash1:
     bis.b   #LED1, &P1OUT
-    mov.b   #150, R12                                           ; BUG 2
+;    mov.b   #150, R12                                           ; BUG 2
+    mov.w   #150, R12   ; correct you need to use the 16bit op vs. 8bit
     call    #delay_ms
     bic.b   #LED1, &P1OUT
     mov.w   #150, R12
@@ -48,7 +52,9 @@ main_loop:
     bis.b   #LED2, &P1OUT
     mov.w   #150, R12
     call    #delay_ms
-    bis.b   #LED2, &P1OUT                                       ; BUG 3
+; LED is already on, need to turn it OFF
+    ;    bis.b   #LED2, &P1OUT                                       ; BUG 3
+    bic.b   #LED2,  &P1OUT  ; correct
     mov.w   #150, R12
     call    #delay_ms
     dec.w   R7

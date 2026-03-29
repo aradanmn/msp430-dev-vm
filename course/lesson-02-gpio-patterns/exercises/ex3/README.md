@@ -36,7 +36,7 @@ handheld/
 ## Integration
 
 In `handheld/main.s`:
-1. Add `#include "hal/leds.s"` after the `_start` code (before the vector table)
+1. Add `#include "hal/leds.s"` after the halt loop (before the vector table) — the code is only reached via `call`, and placing it here keeps `_start` at the beginning of `.text`
 2. Add `call #leds_init` and `call #leds_test` to the init sequence
 
 ## Build & Test

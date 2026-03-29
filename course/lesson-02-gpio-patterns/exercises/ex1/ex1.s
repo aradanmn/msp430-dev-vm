@@ -32,14 +32,63 @@ _start:
     bic.b   #(LED1|LED2), &P1OUT
 
 main_loop:
-    ; Your code here: call flash_led for LED1, then LED2, then pause
 
+    ; State zero is Flash LED1 3 times at 200 ms on/off
+    call #state_zero
+    ; State one is Flash LED2 4 times at 100 ms on/off
+    call #state_one
+    ; State two is 500 ms pause
+    call #state_two
+    ; repeat
     jmp     main_loop
-
+;==============================================================================
+; state zero — Flash LED1 3 times at 200 ms on/off
+;==============================================================================
+state_zero:
+;    mov.b   #LED1, R13
+    mov.b   #LED1, R8
+;   mov.w   #200, R12
+    mov.w   #200, R4
+    call    #flash_led
+    call    #flash_led
+    call    #flash_led
+    ret
+;==============================================================================
+; state one — Flash LED2 4 times at 100 ms on/off
+;==============================================================================
+state_one:
+;    mov.b   #LED2, R13
+    mov.b   #LED2, R8
+;    mov.w   #100, R12
+    mov.w   #100, R4
+    call    #flash_led
+    call    #flash_led
+    call    #flash_led
+    call    #flash_led
+    ret
+;==============================================================================
+; state two — 500 ms pause
+;==============================================================================
+state_two:
+    mov.w   #500, R12
+    call    #delay_ms
+    ret
 ;==============================================================================
 ; flash_led — your subroutine (design the interface yourself)
 ;==============================================================================
-; Your code here
+; Use R13 for led bitmask, use R12 for counter
+flash_led:
+    ; move delay into R4
+    ;mov.w   R12, R4
+    ; move led bitmask into R8
+    ;mov.w   R13, R8
+    mov.w   R4, R12
+    bis.b   R8, &P1OUT  ; Turn LED ON
+    call    #delay_ms   ; wait R8 ms
+    mov.w   R4, R12     ; R12 clobbered reload
+    bic.b   R8, &P1OUT  ; Turn LED OFF
+    call    #delay_ms   ; wait R8 ms
+    ret
 
 ;==============================================================================
 ; delay_ms — from Lesson 01
